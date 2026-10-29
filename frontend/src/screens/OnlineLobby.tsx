@@ -49,7 +49,8 @@ export default function OnlineLobby() {
   // lobiye girince bağlan
   useEffect(() => {
     net.connect();
-  }, []);
+    net.setProfile(profileName || selected.name, xp);
+  }, [profileName, selected.name, xp]);
 
   // avuç içi (arama) sırasında ekrandan çıkılırsa kuyruktan düş
   useEffect(() => {

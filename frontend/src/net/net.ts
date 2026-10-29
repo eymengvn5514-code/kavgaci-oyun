@@ -23,6 +23,7 @@ function emptySnapshot(): LobbySnapshot {
   return {
     status: 'idle',
     count: 0,
+    players: [],
     phase: 'idle',
     role: null,
     opponentName: '',
@@ -45,6 +46,8 @@ class NetClient {
   private ws: WebSocket | null = null;
   private simulated = false;
   private connectTried = false;
+  private profile = { name: 'Oyuncu', xp: 0 };
+  private keepAlive: ReturnType<typeof setInterval> | null = null;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private stateCbs = new Set<(s: PeerState) => void>();
   private hitCbs = new Set<(dmg: number, stun: number, src?: string) => void>();
@@ -120,7 +123,7 @@ class NetClient {
           this.ws = null;
           this.startSimulation();
         }
-      }, 2500);
+      }, 75_000);
       this.timers.push(fallback);
 
       ws.onopen = () => {
@@ -128,6 +131,8 @@ class NetClient {
         clearTimeout(fallback);
         netDebug.open = true;
         this.patch({ status: 'online' });
+        this.sendProfile();
+        this.keepAlive = setInterval(() => this.send({ t: 'ping' }), 25_000);
       };
       ws.onmessage = (ev) => {
         try {
@@ -139,12 +144,13 @@ class NetClient {
       ws.onerror = () => {
         if (!opened) {
           this.ws = null;
-          this.startSimulation();
         } else {
           this.patch({ status: 'error' });
         }
       };
       ws.onclose = () => {
+        if (this.keepAlive) clearInterval(this.keepAlive);
+        this.keepAlive = null;
         if (this.snap.status === 'online') this.patch({ status: 'error', phase: 'canceled', reason: 'net.disconnected' });
       };
     } catch {
@@ -156,6 +162,19 @@ class NetClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
     }
+  }
+
+  setProfile(name: string, xp: number) {
+    this.profile = {
+      name: name.trim().slice(0, 24) || 'Oyuncu',
+      xp: Math.max(0, Math.min(1_000_000, Math.floor(Number(xp) || 0))),
+    };
+    this.sendProfile();
+  }
+
+  private sendProfile() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.send({ t: 'profile', ...this.profile });
   }
 
   /* ---- dış API ---- */
@@ -221,6 +240,9 @@ class NetClient {
       case 'count':
         this.patch({ count: msg.n });
         break;
+      case 'board':
+        this.patch({ players: msg.players });
+        break;
       case 'queued':
         this.patch({ phase: 'queue', deadline: msg.deadline, reason: null });
         break;
@@ -277,9 +299,11 @@ class NetClient {
 
   /* ================= yerel simülasyon (sunucu yok) ================= */
   private startSimulation() {
+    if (this.keepAlive) clearInterval(this.keepAlive);
+    this.keepAlive = null;
     this.simulated = true;
     const status: NetStatus = 'simulated';
-    this.patch({ status, count: 3 + Math.floor(Math.random() * 22) });
+    this.patch({ status, count: 0, players: [] });
   }
 
   private simQueue() {

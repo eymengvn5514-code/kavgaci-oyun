@@ -28,6 +28,8 @@ export interface LobbySnapshot {
   status: NetStatus;
   /** Üstte gösterilen aktif oyuncu sayısı. */
   count: number;
+  /** Sunucuya şu anda bağlı gerçek oyuncular. */
+  players: Array<{ id: string; name: string; xp: number }>;
   phase: LobbyPhase;
   role: Role | null;
   opponentName: string;
@@ -52,6 +54,8 @@ export interface MatchInfo {
 
 /* ---- sunucu <-> istemci mesajları ---- */
 export type ClientMessage =
+  | { t: 'ping' }
+  | { t: 'profile'; name: string; xp: number }
   | { t: 'queue'; name: string; character: string }
   | { t: 'cancel' }
   | { t: 'pick'; character: string }
@@ -61,8 +65,10 @@ export type ClientMessage =
   | { t: 'skill'; id: string };
 
 export type ServerMessage =
+  | { t: 'pong' }
   | { t: 'hello'; id: string; count: number }
   | { t: 'count'; n: number }
+  | { t: 'board'; players: Array<{ id: string; name: string; xp: number }> }
   | { t: 'queued'; deadline: number }
   | { t: 'match'; role: Role; opponent: { name: string; character: string | null }; deadline: number }
   | { t: 'opponentPicked'; character: string | null }

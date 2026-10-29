@@ -149,8 +149,9 @@ export default {
   },
   leaderboard: {
     title: 'XP RANKING',
-    subtitle: 'Global ranking · {{count}} players',
+    subtitle: 'Real players connected now · {{count}} players',
     you: 'YOU',
-    empty: 'Nobody here yet.',
+    empty: 'No players are connected to the server right now.',
+    offline: 'The live leaderboard server is currently unavailable.',
   },
 };

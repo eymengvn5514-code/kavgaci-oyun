@@ -37,6 +37,14 @@ function send(id, msg) {
 function broadcastCount() {
   const n = clients.size;
   for (const c of clients.values()) send(c.id, { t: 'count', n });
+  broadcastBoard();
+}
+
+function broadcastBoard() {
+  const players = [...clients.values()]
+    .map(({ id, name, xp }) => ({ id, name, xp }))
+    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
+  for (const c of clients.values()) send(c.id, { t: 'board', players });
 }
 
 function dropFromQueue(c) {
@@ -106,6 +114,15 @@ function tryMatch() {
 
 function onMessage(c, msg) {
   switch (msg.t) {
+    case 'ping':
+      send(c.id, { t: 'pong' });
+      break;
+    case 'profile': {
+      if (typeof msg.name === 'string') c.name = msg.name.trim().slice(0, 24) || 'Oyuncu';
+      if (Number.isFinite(Number(msg.xp))) c.xp = Math.max(0, Math.min(1_000_000, Math.floor(Number(msg.xp))));
+      broadcastBoard();
+      break;
+    }
     case 'queue': {
       if (c.status !== 'idle') return;
       c.status = 'queue';
@@ -256,6 +273,7 @@ wss.on('connection', (ws) => {
     id,
     ws,
     name: 'Oyuncu',
+    xp: 0,
     character: null,
     status: 'idle',
     matchId: null,

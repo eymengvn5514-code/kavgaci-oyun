@@ -149,8 +149,9 @@ export default {
   },
   leaderboard: {
     title: 'XP SIRALAMASI',
-    subtitle: 'Global sıralama · {{count}} oyuncu',
+    subtitle: 'Şu an bağlı gerçek oyuncular · {{count}} kişi',
     you: 'SEN',
-    empty: 'Henüz kimse yok.',
+    empty: 'Şu an sunucuya bağlı oyuncu yok.',
+    offline: 'Canlı sıralama sunucusuna şu an ulaşılamıyor.',
   },
 };
