@@ -1,0 +1,13 @@
+{
+  "name": "kavgaci-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "KAVGACI online lobi + dövüş relay sunucusu (WebSocket).",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
