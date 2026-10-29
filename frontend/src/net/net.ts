@@ -101,7 +101,9 @@ class NetClient {
     if (this.connectTried) return;
     this.connectTried = true;
     const params = new URLSearchParams(location.search);
-    const url = params.get('server') ?? (import.meta.env.VITE_WS_URL as string | undefined) ?? '';
+    const url = params.get('server')
+      ?? (import.meta.env.VITE_WS_URL as string | undefined)
+      ?? 'wss://kavgaci-online.onrender.com';
 
     if (!url) {
       this.startSimulation();
