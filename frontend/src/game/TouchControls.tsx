@@ -17,8 +17,8 @@ interface TouchControlsProps {
 
 /**
  * Mobil dokunmatik kontroller:
- *  - Sol: hareket (◀ ▶) + zıpla/çömel + yetenek tuşları (C · Q · E · R)
- *  - Sağ: yumruk ve tekme (büyük)
+ *  - Sol: WASD düzeninde hareket ve iki yetenek
+ *  - Sağ: iki yetenek, yumruk ve tekme
  * Cooldown'u olan yetenek tuşu basılamaz.
  */
 export default function TouchControls({ cd, ultReady, skillNames, onCast, katana }: TouchControlsProps) {
@@ -49,52 +49,41 @@ export default function TouchControls({ cd, ultReady, skillNames, onCast, katana
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   });
 
+  const skillButton = (id: (typeof SKILL_IDS)[number]) => {
+    const remaining = cd[id];
+    const locked = id === 'ult' && !ultReady;
+    const disabled = remaining > 0 || locked;
+    return (
+      <button
+        key={id}
+        className={`touch-skill${disabled ? ' cooling' : ''}${id === 'ult' ? ' ult' : ''}`}
+        disabled={disabled}
+        aria-label={skillNames[id]}
+        {...tap(() => onCast(id))}
+      >
+        <span className="touch-skill-key">{SKILL_KEY_LABEL[id]}</span>
+        <span className="touch-skill-name">{skillNames[id]}</span>
+        <span className="touch-skill-meta">{remaining > 0 ? `${Math.ceil(remaining)}` : locked ? '%50' : ''}</span>
+      </button>
+    );
+  };
+
   return (
     <div className="touch-controls">
       <div className="touch-left">
-        <div className="touch-pad">
-          <button className="touch-btn move" aria-label={t('touch.left')} {...hold('left')}>
-            ◀
-          </button>
-          <button className="touch-btn move" aria-label={t('touch.right')} {...hold('right')}>
-            ▶
-          </button>
+        <div className="touch-pad wasd-pad">
+          <span />
+          <button className="touch-btn" aria-label={t('touch.jump')} {...tap(() => (touchInput.jump = true))}>W</button>
+          <span />
+          <button className="touch-btn move" aria-label={t('touch.left')} {...hold('left')}>A</button>
+          <button className="touch-btn move" aria-label={t('touch.crouch')} {...hold('crouch')}>S</button>
+          <button className="touch-btn move" aria-label={t('touch.right')} {...hold('right')}>D</button>
         </div>
-
-        <div className="touch-pad vertical">
-          <button className="touch-btn" aria-label={t('touch.jump')} {...tap(() => (touchInput.jump = true))}>
-            ▲
-          </button>
-          <button className="touch-btn" aria-label={t('touch.crouch')} {...hold('crouch')}>
-            ▼
-          </button>
-        </div>
-
-        <div className="touch-skills">
-          {SKILL_IDS.map((id) => {
-            const remaining = cd[id];
-            const locked = id === 'ult' && !ultReady;
-            const disabled = remaining > 0 || locked;
-            return (
-              <button
-                key={id}
-                className={`touch-skill${disabled ? ' cooling' : ''}${id === 'ult' ? ' ult' : ''}`}
-                disabled={disabled}
-                aria-label={skillNames[id]}
-                {...tap(() => onCast(id))}
-              >
-                <span className="touch-skill-key">{SKILL_KEY_LABEL[id]}</span>
-                <span className="touch-skill-name">{skillNames[id]}</span>
-                <span className="touch-skill-meta">
-                  {remaining > 0 ? `${Math.ceil(remaining)}` : locked ? '%50' : ''}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="touch-skills touch-skills-left">{skillButton(SKILL_IDS[0])}{skillButton(SKILL_IDS[1])}</div>
       </div>
 
       <div className="touch-right">
+        <div className="touch-skills touch-skills-right">{skillButton(SKILL_IDS[2])}{skillButton(SKILL_IDS[3])}</div>
         {katana && (
           <button
             className={`touch-attack katana${katana.cd > 0 ? ' cooling' : ''}`}

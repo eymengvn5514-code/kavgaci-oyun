@@ -12,6 +12,7 @@ import TutorialOverlay from './screens/TutorialOverlay';
 import AccountSetup from './screens/AccountSetup';
 import { useGameStore } from './store/useGameStore';
 import { audio, TRACK } from './audio/audio';
+import './game/PreloadCharacters';
 
 export default function App() {
   const screen = useGameStore((s) => s.screen);

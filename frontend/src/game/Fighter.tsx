@@ -263,7 +263,7 @@ export default function Fighter({
           right: !!(p['KeyD'] || p['ArrowRight'] || touchInput.right),
           crouch: !!(p['KeyS'] || p['ArrowDown'] || touchInput.crouch),
           run: !!(p['ShiftLeft'] || p['ShiftRight']),
-          jump: !!(j['Space'] || j['ArrowUp'] || touchInput.jump),
+          jump: !!(j['KeyW'] || j['Space'] || j['ArrowUp'] || touchInput.jump),
           attack:
             touchInput.attack ??
             (mouse.current.punch ? 'punch' : mouse.current.kick ? 'kick' : null),

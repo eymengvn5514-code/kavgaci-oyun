@@ -61,8 +61,8 @@ const STEPS: Step[] = [
   },
   {
     who: 'efe',
-    tr: 'Her karakterin CAN, GÜÇ, HIZ ve MENZİL değerleri farklıdır. A / D ile yürü, BOŞLUK ile zıpla; havadayken sağ tıkla uçan tekme at.',
-    en: 'Every fighter has different HP, POWER, SPEED and RANGE. Move with A / D, hold SHIFT to run, jump with SPACE, and right-click in the air for a flying kick.',
+    tr: 'Her karakterin CAN, GÜÇ, HIZ ve MENZİL değerleri farklıdır. A / D ile yürü, W veya BOŞLUK ile zıpla; havadayken sağ tıkla uçan tekme at.',
+    en: 'Every fighter has different HP, POWER, SPEED and RANGE. Move with A / D, hold SHIFT to run, jump with W or SPACE, and right-click in the air for a flying kick.',
     diagram: 'controls',
   },
   {

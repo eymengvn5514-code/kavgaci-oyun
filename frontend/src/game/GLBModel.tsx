@@ -1,4 +1,4 @@
-import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
+import { Component, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ErrorInfo, MutableRefObject, ReactNode } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
@@ -18,7 +18,7 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { useGameStore } from '../store/useGameStore';
 import type { Action, DismemberKind } from './types';
 import { FIGHTER_HEIGHT } from './types';
-import { ANIM_LIB_URL, MIXAMO_ANIM_URLS, normalizeId, overrideFor } from './models';
+import { ANIM_LIB_URL, MIXAMO_ANIM_URLS, MODEL_URLS, normalizeId, overrideFor } from './models';
 
 type ClipKey = 'idle' | 'walk' | 'run' | 'jump' | 'punch' | 'kick' | 'lowkick' | 'airkick' | 'airpunch' | 'crouch' | 'hit' | 'dead' | 'revive' | 'victory';
 
@@ -388,6 +388,17 @@ export class ModelBoundary extends Component<{ fallback: ReactNode; children: Re
   }
 }
 
+function OptionalAnimationSources({
+  onLoad,
+}: {
+  onLoad: (shared: AnimationClip[], mixamo: AnimationClip[][]) => void;
+}) {
+  const { animations: shared } = useGLTF(ANIM_LIB_URL, false, true);
+  const sources = useLoader(FBXLoader, Object.values(MIXAMO_ANIM_URLS));
+  useEffect(() => onLoad(shared, sources.map((source) => source.animations)), [onLoad, shared, sources]);
+  return null;
+}
+
 interface GLBModelProps {
   url: string;
   characterId: string;
@@ -468,9 +479,7 @@ export default function GLBModel({
   dismember,
 }: GLBModelProps) {
   const { scene, animations } = useGLTF(url, false, true);
-  const { animations: sharedAnims } = useGLTF(ANIM_LIB_URL, false, true);
-  const mixamoUrls = Object.values(MIXAMO_ANIM_URLS);
-  const mixamoSources = useLoader(FBXLoader, mixamoUrls);
+  const [optionalAnimations, setOptionalAnimations] = useState<{ shared: AnimationClip[]; mixamo: AnimationClip[][] }>({ shared: [], mixamo: [] });
   const flip = useGameStore((s) => s.facingFlips[characterId] ?? false);
   if (import.meta.env.DEV) console.info(`[kavgaci] GLB yüklendi: ${characterId} (${animations.length} klip)`);
 
@@ -523,14 +532,14 @@ export default function GLBModel({
 
   const clips = useMemo(() => {
     const own = resolveClips(animations);
-    const shared = skinned ? resolveClips(sharedAnims) : {};
+    const shared = skinned ? resolveClips(optionalAnimations.shared) : {};
     const mixamo: Partial<Record<ClipKey, AnimationClip>> = {};
     if (skinned) {
       const boneNames = new Set(bonesOf(model).map((bone) => bone.name));
       const files = Object.keys(MIXAMO_ANIM_URLS);
       files.forEach((file, index) => {
         const key = MIXAMO_FILE_KEY[normalizeId(file)];
-        const source = mixamoSources[index]?.animations[0];
+        const source = optionalAnimations.mixamo[index]?.[0];
         if (key && source) mixamo[key] = retargetMixamoClip(source, key, boneNames);
       });
     }
@@ -543,7 +552,12 @@ export default function GLBModel({
       if (clip) out[key] = trimToward(clip, key, characterId);
     }
     return out;
-  }, [animations, sharedAnims, mixamoSources, skinned, model, characterId]);
+  }, [animations, optionalAnimations, skinned, model, characterId]);
+
+  const handleOptionalAnimations = useMemo(
+    () => (shared: AnimationClip[], mixamo: AnimationClip[][]) => setOptionalAnimations({ shared, mixamo }),
+    [],
+  );
 
   const mixer = useMemo(
     () => (Object.keys(clips).length > 0 ? new AnimationMixer(model) : null),
@@ -781,6 +795,14 @@ export default function GLBModel({
   });
 
   return (
+    <>
+    {skinned && (
+      <ModelBoundary fallback={null}>
+        <Suspense fallback={null}>
+          <OptionalAnimationSources onLoad={handleOptionalAnimations} />
+        </Suspense>
+      </ModelBoundary>
+    )}
     <group ref={puppet}>
       <group rotation-y={fit.yaw} scale={fit.scale}>
         <group position={fit.offset}>
@@ -809,5 +831,8 @@ export default function GLBModel({
         )}
       </group>
     </group>
+    </>
   );
 }
+
+for (const url of Object.values(MODEL_URLS)) useGLTF.preload(url, false, true);

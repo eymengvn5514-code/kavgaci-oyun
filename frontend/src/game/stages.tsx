@@ -34,8 +34,9 @@ function StageModel({ url, tweak }: { url: string; tweak?: { scale?: number; z?:
     instance.traverse((child) => {
       const mesh = child as Mesh;
       if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      // Large arena GLBs are background scenery; skip costly per-mesh shadows.
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
     });
     const box = new Box3().setFromObject(instance);
     const size = new Vector3();
@@ -175,11 +176,11 @@ function Colosseum() {
       <fog attach="fog" args={['#d9a05b', 18, 42]} />
       <hemisphereLight args={['#ffe6b0', '#4a3823', 0.95]} />
       <directionalLight
-        castShadow
+        castShadow={false}
         position={[6, 13, 7]}
         intensity={1.6}
         color="#ffd9a0"
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[512, 512]}
       />
 
       {url && (

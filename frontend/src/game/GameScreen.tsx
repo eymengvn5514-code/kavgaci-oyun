@@ -153,6 +153,7 @@ function Engine({
 }
 
 export default function GameScreen() {
+  const compactGpu = typeof window !== 'undefined' && (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 900);
   const { t } = useTranslation();
   const language = useGameStore((s) => s.language);
   const mode = useGameStore((s) => s.mode);
@@ -677,10 +678,10 @@ export default function GameScreen() {
   return (
     <div className={`game-screen${showTouch ? ' touch-on' : ''}`}>
       <Canvas
-        shadows="percentage"
+        shadows={false}
         camera={{ position: [0, 2.4, 11.2], fov: 40 }}
-        dpr={[1, 2]}
-        gl={{ localClippingEnabled: true }}
+        dpr={compactGpu ? [1, 1.25] : [1, 1.5]}
+        gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: !compactGpu }}
       >
         <CameraRig world={world} cineRef={cineRef} />
         <Engine world={world} cd={cd} katanaCd={katanaCdRef} onSync={setSync} />
